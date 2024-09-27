@@ -1,0 +1,20 @@
+<div class="container mt-4">
+  <h1 class="text-center">Document Details</h1>
+
+  <div class="card mt-3">
+    <div class="card-body">
+      <p class="mb-1"><strong>File Name:</strong> <%= @document.file_name %></p>
+      <p class="mb-1"><strong>Upload Start:</strong> <%= @document.upload_start %></p>
+      <p class="mb-1"><strong>Upload End:</strong> <%= @document.upload_end %></p>
+      <p class="mb-1"><strong>Status:</strong> <%= @document.status %></p>
+      <p class="mb-1"><strong>Number of Patients:</strong> <%= @document.number_of_patients %></p>
+      <p class="mb-1"><strong>Successful Rows:</strong> <%= @document.successful_rows %></p>
+      <p class="mb-1"><strong>Failed Rows:</strong> <%= @document.failed_rows %></p>
+      <p class="mb-1"><strong>Errors:</strong> <%= @document.document_errors.presence || 'None' %></p>
+    </div>
+  </div>
+
+  <div class="mt-3 text-center">
+    <%= link_to 'Back to Documents', documents_path, class: "btn btn-secondary" %>
+  </div>
+</div>

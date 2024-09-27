@@ -10,22 +10,21 @@ class ProcessDocumentJob < ApplicationJob
     begin
       total_rows_processed = 0
       batch_size = 1000
-      batches = []
+      document.update(
+        status: 'processing',
+      )
 
-  
       CSV.foreach(uploaded_file.path, headers: true).each_slice(batch_size) do |batch|
-        batches << batch.map(&:to_h) 
-      end
+        patient_data = batch.map(&:to_h)
+        total_rows_processed += patient_data.size
 
-      total_rows_processed = batches.flatten.size 
-
-      batches.each do |batch|
-        ProcessBatchJob.perform_later(document_id, batch)
+        ProcessBatchJob.perform_later(document_id, patient_data)
       end
 
       document.update(
-        status: 'processing',
-        number_of_patients: total_rows_processed
+        status: 'complete',
+        number_of_patients: total_rows_processed,
+        upload_end: Time.current
       )
 
     rescue => e

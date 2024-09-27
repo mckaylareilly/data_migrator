@@ -9,23 +9,21 @@ class ProcessBatchJob < ApplicationJob
       error_messages = []
   
       batch.each do |row|
-        patient_attributes = row.to_hash.slice('health identifier', 'health identifier province', 'address 1', 'address 2', 'email', 'phone', 'sex')
-  
         patient = Patient.new(
-          patient_id: patient_attributes['health identifier'],
-          origin_province: patient_attributes['health identifier province'],
-          address1: patient_attributes['address 1'],
-          address2: patient_attributes['address 2'],
-          email: patient_attributes['email'],
-          phone: patient_attributes['phone'],
-          sex: patient_attributes['sex']
+          patient_id: row['health identifier'],
+          origin_province: row['health identifier province'],
+          address1: row['address 1'],
+          address2: row['address 2'],
+          email: row['email'],
+          phone: row['phone'],
+          sex: row['sex']
         )
   
         if patient.save
           successful_rows += 1
         else
           failed_rows += 1
-          error_messages << "Error for patient ID #{patient_attributes['health identifier']}: #{patient.errors.full_messages.join(', ')}"
+          error_messages << "Error for patient ID #{row['health identifier']}: #{patient.errors.full_messages.join(', ')}"
         end
       end
   
@@ -33,11 +31,15 @@ class ProcessBatchJob < ApplicationJob
       document.increment!(:failed_rows, failed_rows)
       document.document_errors += error_messages.join('; ') unless error_messages.empty?
   
-      if document.number_of_patients == (document.successful_rows + document.failed_rows)
-        document.update(
-          upload_end: Time.current,
-          status: failed_rows.zero? ? 'success' : 'partially successful'
-        )
+      total_patients_processed = successful_rows + failed_rows
+  
+      if total_patients_processed == document.number_of_patients
+        if failed_rows.zero?
+          document.update(status: 'success')
+        else
+          document.update(status: 'partially successful')
+        end
+        document.update(upload_end: Time.current)
       end
     end
   end
